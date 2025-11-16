@@ -1,0 +1,11 @@
+fastapi
+pydantic
+mangum
+uvicorn[standard]  
+
+boto3
+stripe
+pydantic-settings
+
+python-dotenv     
+aws-sam-cli
