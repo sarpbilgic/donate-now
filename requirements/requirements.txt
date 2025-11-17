@@ -2,6 +2,7 @@ fastapi
 pydantic
 mangum
 uvicorn[standard]  
+httpx
 
 boto3
 stripe

@@ -3,3 +3,4 @@ mangum
 boto3
 stripe
 pydantic-settings
+httpx
