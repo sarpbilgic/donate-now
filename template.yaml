@@ -77,33 +77,33 @@ Resources:
   ApiFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: src/api/ 
-      Handler: main.handler 
-
+      CodeUri: src/
+      Handler: api.main.handler 
       Policies:
         - SQSSendMessagePolicy:
             QueueName: !GetAtt PaymentQueue.QueueName
         - SQSSendMessagePolicy:
             QueueName: !GetAtt NotificationQueue.QueueName
       Events:
-    
         ApiEvents:
           Type: Api
           Properties:
             Path: /{proxy+} 
             Method: ANY
             RestApiId: !Ref ApiGateway
+    Metadata: 
+      BuildMethod: python3.11
+      BuildProperties:
+        Manifest: api/requirements.txt
 
   ApiGateway:
     Type: AWS::Serverless::Api
     Properties:
       StageName: Prod
-
       Auth:
         Authorizers:
           CognitoAuthorizer:
             UserPoolArn: !GetAtt CognitoUserPool.Arn
-
         DefaultAuthorizer: CognitoAuthorizer
       DefinitionBody:
         swagger: '2.0'
@@ -116,7 +116,6 @@ Resources:
                 type: 'aws_proxy'
                 uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations'
                 httpMethod: 'POST'
-          # PROTECTED ENDPOINT: Uses default Cognito auth
           /donations/create-intent:
             post:
               # No 'security: []' means it uses the default authorizer
@@ -128,8 +127,8 @@ Resources:
   PaymentWorkerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: src/workers/ 
-      Handler: payment_worker.lambda_handler
+      CodeUri: src/ 
+      Handler: workers.payment_worker.lambda_handler
       Policies:
         - SQSPollerPolicy:
             QueueName: !GetAtt PaymentQueue.QueueName
@@ -141,12 +140,16 @@ Resources:
           Properties:
             Queue: !GetAtt PaymentQueue.Arn
             BatchSize: 5
+    Metadata: 
+      BuildMethod: python3.11
+      BuildProperties:
+        Manifest: workers/requirements.txt
 
   NotificationWorkerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: src/workers/
-      Handler: notification_worker.lambda_handler
+      CodeUri: src/
+      Handler: workers.notification_worker.lambda_handler
       Policies:
         - SQSPollerPolicy:
             QueueName: !GetAtt NotificationQueue.QueueName
@@ -158,6 +161,10 @@ Resources:
           Properties:
             Queue: !GetAtt NotificationQueue.Arn
             BatchSize: 5
+    Metadata: 
+      BuildMethod: python3.11
+      BuildProperties:
+        Manifest: workers/requirements.txt
 
 
 Outputs:

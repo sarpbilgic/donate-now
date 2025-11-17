@@ -1,0 +1,4 @@
+boto3
+stripe
+pydantic-settings
+tenacity
