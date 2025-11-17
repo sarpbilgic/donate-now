@@ -63,23 +63,32 @@ class DynamoDataAccess:
 
     def update_donation_status(self, user_email: str, donation_id: str, 
                                status: str, payment_intent_id: str) -> dict:
-        response = self.table.update_item(
-            Key={
-                "PK": f"{USER_PREFIX}{user_email}",
-                "SK": f"{DONATION_PREFIX}{donation_id}"
-            },
-            UpdateExpression="SET #status = :s, #stripe_id = :pid",
-            ExpressionAttributeNames={
-                "#status": "status",
-                "#stripe_id": "stripe_payment_intent_id"
-            },
-            ExpressionAttributeValues={
-                ":s": status,
-                ":pid": payment_intent_id
-            },
-            ReturnValues="ALL_NEW"
-        )
-        return response.get("Attributes", {})
+        try:                       
+            response = self.table.update_item(
+                Key={
+                    "PK": f"{USER_PREFIX}{user_email}",
+                    "SK": f"{DONATION_PREFIX}{donation_id}"
+                },
+                UpdateExpression="SET #status = :s, #stripe_id = :pid",
+                ConditionExpression="#status <> :s",
+                ExpressionAttributeNames={
+                    "#status": "status",
+                    "#stripe_id": "stripe_payment_intent_id"
+                },
+                ExpressionAttributeValues={
+                    ":s": status,
+                    ":pid": payment_intent_id
+                },
+                ReturnValues="ALL_NEW"
+            )
+            return response.get("Attributes", {})
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
+                print(f"Idempotency check: Donation {donation_id} status is already {status}.")
+                return None 
+            else:
+                print(f"Error updating donation status: {e}")
+                raise
 
     def list_donations_by_user(self, email: str) -> list[dict]:
         response = self.table.query(

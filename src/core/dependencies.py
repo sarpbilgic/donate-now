@@ -39,7 +39,7 @@ def get_donation_service() -> DonationService:
     sqs_client = session.client('sqs')
     
     return DonationService(
-        repository=get_dynamo_table(),
+        data_access=get_dynamo_table(),
         sqs_client=sqs_client,
         payment_queue_url=settings.PAYMENT_QUEUE_URL,
         notification_queue_url=settings.NOTIFICATION_QUEUE_URL,

@@ -9,5 +9,6 @@ def lambda_handler(event, context):
             donation_service.handle_payment_event(event_body)
         except Exception as e:
             print(f"Error processing payment event: {e}")
+            raise e
             
     return {'statusCode': 200}
