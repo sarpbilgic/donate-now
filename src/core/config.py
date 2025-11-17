@@ -1,11 +1,12 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
+from typing import Optional
 
 class Settings(BaseSettings):
     
     STRIPE_PUBLISHABLE_KEY: str
     STRIPE_SECRET_KEY: str
-
+    AWS_PROFILE: Optional[str] = None
     AWS_REGION: str
     NOTIFICATION_QUEUE_URL: str
     PAYMENT_QUEUE_URL: str
