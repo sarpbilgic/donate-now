@@ -62,11 +62,17 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: payment-processing-queue
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt PaymentQueueDLQ.Arn
+        maxReceiveCount: 5
 
   NotificationQueue:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: notification-queue
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt NotificationQueueDLQ.Arn
+        maxReceiveCount: 5
 
   ApiFunction:
     Type: AWS::Serverless::Function

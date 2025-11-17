@@ -4,7 +4,7 @@ from functools import lru_cache
 class Settings(BaseSettings):
     
     STRIPE_PUBLISHABLE_KEY: str
-    STRIPE_SECRET_KEY: str!
+    STRIPE_SECRET_KEY: str
 
     AWS_REGION: str
     NOTIFICATION_QUEUE_URL: str

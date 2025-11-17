@@ -3,7 +3,7 @@ import stripe
 from functools import lru_cache
 
 from src.core.config import settings
-from src.data_access.dynamodb import DynamoDBTable
+from src.data_access.dynamodb import DynamoDataAccess
 from src.services.donation_service import DonationService
 from src.services.notification_service import NotificationService
 
@@ -16,11 +16,11 @@ def get_boto_session() -> boto3.Session:
     )
 
 @lru_cache()
-def get_dynamo_table() -> DynamoDBTable:
+def get_dynamo_table() -> DynamoDataAccess:
     session = get_boto_session()
     dynamo_resource = session.resource('dynamodb')
     table = dynamo_resource.Table(settings.DYNAMODB_TABLE_NAME)
-    return DynamoDBTable(table=table)
+    return DynamoDataAccess(table=table)
 
 @lru_cache()
 def get_notification_service() -> NotificationService:

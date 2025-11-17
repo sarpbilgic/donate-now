@@ -3,7 +3,7 @@ pydantic
 mangum
 uvicorn[standard]  
 httpx
-
+tenacity
 boto3
 stripe
 pydantic-settings
