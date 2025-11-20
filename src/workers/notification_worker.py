@@ -1,5 +1,5 @@
 import json
-from src.core.dependencies import notification_service
+from core.dependencies import notification_service
 
 def lambda_handler(event, context):
     print(f"Received {len(event['Records'])} notification jobs.")

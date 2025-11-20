@@ -1,0 +1,9 @@
+fastapi
+mangum
+boto3
+stripe
+pydantic-settings
+httpx
+tenacity
+uvicorn
+pydantic[email]

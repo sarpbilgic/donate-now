@@ -2,10 +2,10 @@ import boto3
 import stripe
 from functools import lru_cache
 
-from src.core.config import settings
-from src.data_access.dynamodb import DynamoDataAccess
-from src.services.donation_service import DonationService
-from src.services.notification_service import NotificationService
+from core.config import settings
+from data_access.dynamodb import DynamoDataAccess
+from services.donation_service import DonationService
+from services.notification_service import NotificationService
 
 
 @lru_cache()
@@ -19,7 +19,7 @@ def get_boto_session() -> boto3.Session:
 def get_dynamo_table() -> DynamoDataAccess:
     session = get_boto_session()
     dynamo_resource = session.resource('dynamodb')
-    table = dynamo_resource.Table(settings.DYNAMODB_TABLE_NAME)
+    table = dynamo_resource.Table(settings.DYNAMO_TABLE_NAME)
     return DynamoDataAccess(table=table)
 
 @lru_cache()
@@ -33,7 +33,13 @@ def get_notification_service() -> NotificationService:
 
 @lru_cache()
 def get_donation_service() -> DonationService:
+    if not settings.STRIPE_SECRET_KEY:
+        raise ValueError("STRIPE_SECRET_KEY is required. Set it in SSM Parameter Store as /donate-now/STRIPE_SECRET_KEY or as an environment variable.")
+    
     stripe.api_key = settings.STRIPE_SECRET_KEY
+    
+    if not settings.STRIPE_WEBHOOK_SECRET:
+        raise ValueError("STRIPE_WEBHOOK_SECRET is required. Set it in SSM Parameter Store as /donate-now/STRIPE_WEBHOOK_SECRET or as an environment variable.")
     
     session = get_boto_session()
     sqs_client = session.client('sqs')

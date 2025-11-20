@@ -1,4 +1,4 @@
-from src.core.dependencies import donation_service
+from core.dependencies import donation_service
 
 def lambda_handler(event, context):
     print(f"Received {len(event['Records'])} payment events.")

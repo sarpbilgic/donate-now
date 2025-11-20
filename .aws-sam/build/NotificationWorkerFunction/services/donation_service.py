@@ -2,8 +2,8 @@ import json
 import stripe
 from botocore.exceptions import ClientError
 
-from src.data_access.dynamodb import DynamoDataAccess
-from src.models.donation import Donation, UserProfile
+from data_access.dynamodb import DynamoDataAccess
+from models.donation import Donation, UserProfile
 
 class DonationService:
     def __init__(
@@ -65,59 +65,58 @@ class DonationService:
             print(f"SQS Error: {e}")
             raise
 
- def handle_payment_event(self, event_body: str):
-    
-    event = json.loads(event_body)
-    
-    if event['type'] == 'payment_intent.succeeded':
-        intent = event['data']['object']
+    def handle_payment_event(self, event_body: str):
+        event = json.loads(event_body)
         
-        metadata = intent['metadata']
-        email = metadata['user_email']
-        donation_id = metadata['donation_id']
-        payment_intent_id = intent['id']
-        amount = intent['amount']
+        if event['type'] == 'payment_intent.succeeded':
+            intent = event['data']['object']
+            
+            metadata = intent['metadata']
+            email = metadata['user_email']
+            donation_id = metadata['donation_id']
+            payment_intent_id = intent['id']
+            amount = intent['amount']
 
-        updated_attributes = self.data_access.update_donation_status(
-            user_email=email,
-            donation_id=donation_id,
-            status="SUCCEEDED",
-            payment_intent_id=payment_intent_id
-        )
-
-        if updated_attributes:
-            notification_job = {
-                "type": "RECEIPT",
-                "email_to": email,
-                "amount_cents": amount,
-                "donation_id": donation_id
-            }
-            self.sqs_client.send_message(
-                QueueUrl=self.notification_queue_url,
-                MessageBody=json.dumps(notification_job)
+            updated_attributes = self.data_access.update_donation_status(
+                user_email=email,
+                donation_id=donation_id,
+                status="SUCCEEDED",
+                payment_intent_id=payment_intent_id
             )
-            print(f"Successfully processed payment {payment_intent_id}.")
-        else:
-            print(f"Skipped duplicate processing for payment {payment_intent_id}.")
 
-    elif event['type'] == 'payment_intent.failed':
-        intent = event['data']['object']
-        metadata = intent['metadata']
-        email = metadata['user_email']
-        donation_id = metadata['donation_id']
-        payment_intent_id = intent['id']
+            if updated_attributes:
+                notification_job = {
+                    "type": "RECEIPT",
+                    "email_to": email,
+                    "amount_cents": amount,
+                    "donation_id": donation_id
+                }
+                self.sqs_client.send_message(
+                    QueueUrl=self.notification_queue_url,
+                    MessageBody=json.dumps(notification_job)
+                )
+                print(f"Successfully processed payment {payment_intent_id}.")
+            else:
+                print(f"Skipped duplicate processing for payment {payment_intent_id}.")
 
-        updated_attributes = self.data_access.update_donation_status(
-            user_email=email,
-            donation_id=donation_id,
-            status="FAILED",
-            payment_intent_id=payment_intent_id
-        )
+        elif event['type'] == 'payment_intent.failed':
+            intent = event['data']['object']
+            metadata = intent['metadata']
+            email = metadata['user_email']
+            donation_id = metadata['donation_id']
+            payment_intent_id = intent['id']
+
+            updated_attributes = self.data_access.update_donation_status(
+                user_email=email,
+                donation_id=donation_id,
+                status="FAILED",
+                payment_intent_id=payment_intent_id
+            )
+            
+            if updated_attributes:
+                print(f"Payment failed for donation {donation_id}.")
+            else:
+                print(f"Skipped duplicate processing for failed payment {donation_id}.")
         
-        if updated_attributes:
-            print(f"Payment failed for donation {donation_id}.")
         else:
-            print(f"SkiSlipped duplicate processing for failed payment {donation_id}.")
-    
-    else:
-        print(f"Received unhandled event type: {event['type']}")
+            print(f"Received unhandled event type: {event['type']}")

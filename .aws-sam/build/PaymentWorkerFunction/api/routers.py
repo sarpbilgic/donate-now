@@ -9,10 +9,11 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 import stripe
 
-from src.core.dependencies import donation_service
-from src.api.schemas import CognitoUser, DonationIntentRequest, DonationIntentResponse
+from core.dependencies import donation_service
+from api.schemas import CognitoUser, DonationIntentRequest, DonationIntentResponse
 
 router = APIRouter()
+
 
 async def get_current_user(request: Request) -> CognitoUser:
     try:
@@ -24,7 +25,6 @@ async def get_current_user(request: Request) -> CognitoUser:
 
         user = CognitoUser(**claims)
         
-        # Check if email is verified
         if not user.email_verified:
             raise HTTPException(status_code=403, detail="Email not verified")
             

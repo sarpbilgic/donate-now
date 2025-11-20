@@ -3,3 +3,5 @@
 /pycache/
 /venv/
 /__pycache__/
+.aws-sam/
+samconfig.toml

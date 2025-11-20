@@ -11,14 +11,19 @@ Globals:
     MemorySize: 1024
     Environment:
       Variables:
+        AWS_REGION:
+          Ref: AWS::Region
         DYNAMO_TABLE_NAME:
           Ref: DonationsTable
         PAYMENT_QUEUE_URL:
           Ref: PaymentQueue
         NOTIFICATION_QUEUE_URL:
           Ref: NotificationQueue
-        STRIPE_SECRET_KEY: '{{resolve:ssm:STRIPE_SECRET_KEY:1}}'
-        STRIPE_WEBHOOK_SECRET: '{{resolve:ssm:STRIPE_WEBHOOK_SECRET:1}}'
+        COGNITO_USER_POOL_ID:
+          Ref: CognitoUserPool
+        COGNITO_USER_POOL_CLIENT_ID:
+          Ref: CognitoUserPoolClient
+        SES_FROM_EMAIL: sarpemrebilgic@gmail.com
 Resources:
   CognitoUserPool:
     Type: AWS::Cognito::UserPool
@@ -56,6 +61,11 @@ Resources:
       - AttributeName: SK
         KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
+  PaymentQueueDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: payment-processing-queue-dlq
+      MessageRetentionPeriod: 1209600
   PaymentQueue:
     Type: AWS::SQS::Queue
     Properties:
@@ -66,6 +76,11 @@ Resources:
           - PaymentQueueDLQ
           - Arn
         maxReceiveCount: 5
+  NotificationQueueDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: notification-queue-dlq
+      MessageRetentionPeriod: 1209600
   NotificationQueue:
     Type: AWS::SQS::Queue
     Properties:
@@ -92,6 +107,14 @@ Resources:
             Fn::GetAtt:
             - NotificationQueue
             - QueueName
+      - Statement:
+        - Sid: AllowSSMParameterAccess
+          Effect: Allow
+          Action:
+          - ssm:GetParameter
+          - ssm:GetParameters
+          Resource:
+          - Fn::Sub: arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/donate-now/*
       Events:
         ApiEvents:
           Type: Api
@@ -101,9 +124,6 @@ Resources:
             RestApiId:
               Ref: ApiGateway
     Metadata:
-      BuildMethod: python3.11
-      BuildProperties:
-        Manifest: api/requirements.txt
       SamResourceId: ApiFunction
   ApiGateway:
     Type: AWS::Serverless::Api
@@ -151,6 +171,13 @@ Resources:
       - DynamoDBWritePolicy:
           TableName:
             Ref: DonationsTable
+      - Statement:
+        - Effect: Allow
+          Action:
+          - ssm:GetParameter
+          - ssm:GetParameters
+          Resource:
+          - Fn::Sub: arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/donate-now/*
       Events:
         PaymentQueueEvent:
           Type: SQS
@@ -161,9 +188,6 @@ Resources:
               - Arn
             BatchSize: 5
     Metadata:
-      BuildMethod: python3.11
-      BuildProperties:
-        Manifest: workers/requirements.txt
       SamResourceId: PaymentWorkerFunction
   NotificationWorkerFunction:
     Type: AWS::Serverless::Function
@@ -178,6 +202,13 @@ Resources:
             - QueueName
       - SESCrudPolicy:
           IdentityName: sarpemrebilgic@gmail.com
+      - Statement:
+        - Effect: Allow
+          Action:
+          - ssm:GetParameter
+          - ssm:GetParameters
+          Resource:
+          - Fn::Sub: arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/donate-now/*
       Events:
         NotificationQueueEvent:
           Type: SQS
@@ -188,15 +219,12 @@ Resources:
               - Arn
             BatchSize: 5
     Metadata:
-      BuildMethod: python3.11
-      BuildProperties:
-        Manifest: workers/requirements.txt
       SamResourceId: NotificationWorkerFunction
 Outputs:
   ApiEndpoint:
     Description: API Gateway endpoint URL
     Value:
-      Fn::Sub: https://d${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/
+      Fn::Sub: https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/
   CognitoUserPoolId:
     Description: ID of the Cognito User Pool
     Value:

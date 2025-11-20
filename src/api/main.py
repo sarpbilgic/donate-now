@@ -1,7 +1,6 @@
 from fastapi import FastAPI
-from src.core.config import config
 from mangum import Mangum
-from src.api import routers
+from api import routers
 
 
 app = FastAPI()

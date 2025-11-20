@@ -3,7 +3,7 @@ from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 from datetime import datetime
 from typing import Any
-from src.models.donation import UserProfile, Donation
+from models.donation import UserProfile, Donation
 
 USER_PREFIX = "USER#"
 DONATION_PREFIX = "DONATION#"
