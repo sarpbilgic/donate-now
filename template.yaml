@@ -5,6 +5,12 @@ Description: >
 
 
 Globals:
+  Api:
+    Cors:
+      AllowMethods: "'*'"
+      AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,stripe-signature'"
+      AllowOrigin: "'*'"
+  
   Function:
     Runtime: python3.11
     Timeout: 30
@@ -12,7 +18,6 @@ Globals:
 
     Environment:
       Variables:
-        AWS_REGION: !Ref AWS::Region
         DYNAMO_TABLE_NAME: !Ref DonationsTable
         PAYMENT_QUEUE_URL: !Ref PaymentQueue
         NOTIFICATION_QUEUE_URL: !Ref NotificationQueue
@@ -43,6 +48,10 @@ Resources:
       UserPoolId: !Ref CognitoUserPool
       ClientName: WebAppClient
       GenerateSecret: false 
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_USER_SRP_AUTH
 
   DonationsTable:
     Type: AWS::DynamoDB::Table
@@ -137,6 +146,64 @@ Resources:
           /donations/create-intent:
             post:
               # No 'security: []' means it uses the default authorizer
+              x-amazon-apigateway-integration:
+                type: 'aws_proxy'
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations'
+                httpMethod: 'POST'
+          /docs:
+            get:
+              security: [] # Make docs public
+              x-amazon-apigateway-integration:
+                type: 'aws_proxy'
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations'
+                httpMethod: 'POST'
+          /openapi.json:
+            get:
+              security: [] # Make OpenAPI spec public
+              x-amazon-apigateway-integration:
+                type: 'aws_proxy'
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations'
+                httpMethod: 'POST'
+          /:
+            get:
+              security: [] # Make root endpoint public
+              x-amazon-apigateway-integration:
+                type: 'aws_proxy'
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations'
+                httpMethod: 'POST'
+          /{proxy+}:
+            options:
+              security: [] # CORS preflight
+              x-amazon-apigateway-integration:
+                type: 'aws_proxy'
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations'
+                httpMethod: 'POST'
+            get:
+              x-amazon-apigateway-integration:
+                type: 'aws_proxy'
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations'
+                httpMethod: 'POST'
+            post:
+              x-amazon-apigateway-integration:
+                type: 'aws_proxy'
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations'
+                httpMethod: 'POST'
+            put:
+              x-amazon-apigateway-integration:
+                type: 'aws_proxy'
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations'
+                httpMethod: 'POST'
+            patch:
+              x-amazon-apigateway-integration:
+                type: 'aws_proxy'
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations'
+                httpMethod: 'POST'
+            delete:
+              x-amazon-apigateway-integration:
+                type: 'aws_proxy'
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations'
+                httpMethod: 'POST'
+            head:
               x-amazon-apigateway-integration:
                 type: 'aws_proxy'
                 uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations'
