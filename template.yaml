@@ -158,6 +158,12 @@ Resources:
                 type: 'aws_proxy'
                 uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations'
                 httpMethod: 'POST'
+            options:
+              security: []
+              x-amazon-apigateway-integration:
+                type: 'aws_proxy'
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations'
+                httpMethod: 'POST'
           /donations/create-intent:
             post:
               # No 'security: []' means it uses the default authorizer
@@ -172,6 +178,12 @@ Resources:
                 type: 'aws_proxy'
                 uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations'
                 httpMethod: 'POST'
+            options:
+              security: []
+              x-amazon-apigateway-integration:
+                type: 'aws_proxy'
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations'
+                httpMethod: 'POST'
           /openapi.json:
             get:
               security: [] # Make OpenAPI spec public
@@ -179,9 +191,47 @@ Resources:
                 type: 'aws_proxy'
                 uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations'
                 httpMethod: 'POST'
+            options:
+              security: []
+              x-amazon-apigateway-integration:
+                type: 'aws_proxy'
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations'
+                httpMethod: 'POST'
+          /donations/recent:
+            get:
+              security: [] # Make recent donations public
+              x-amazon-apigateway-integration:
+                type: 'aws_proxy'
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations'
+                httpMethod: 'POST'
+            options:
+              security: []
+              x-amazon-apigateway-integration:
+                type: 'aws_proxy'
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations'
+                httpMethod: 'POST'
+          /donations/total:
+            get:
+              security: [] # Make total donations public
+              x-amazon-apigateway-integration:
+                type: 'aws_proxy'
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations'
+                httpMethod: 'POST'
+            options:
+              security: []
+              x-amazon-apigateway-integration:
+                type: 'aws_proxy'
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations'
+                httpMethod: 'POST'
           /:
             get:
               security: [] # Make root endpoint public
+              x-amazon-apigateway-integration:
+                type: 'aws_proxy'
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations'
+                httpMethod: 'POST'
+            options:
+              security: []
               x-amazon-apigateway-integration:
                 type: 'aws_proxy'
                 uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations'

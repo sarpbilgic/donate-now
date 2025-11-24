@@ -77,6 +77,7 @@ class DonationService:
         event = json.loads(event_body)
         
         if event['type'] == 'payment_intent.succeeded':
+            
             intent = event['data']['object']
             
             metadata = intent['metadata']

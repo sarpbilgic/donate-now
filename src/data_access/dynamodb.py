@@ -110,7 +110,11 @@ class DynamoDataAccess:
                 ScanIndexForward=False, 
                 Limit=limit
             )
-            return response.get("Items", [])
+            items = response.get("Items", [])
+            for item in items:
+                if 'donor_name' not in item:
+                    item['donor_name'] = 'Anonymous'
+            return items
         except ClientError as e:
             logger.error(f"Error getting recent donations: {e}")
             raise

@@ -5,6 +5,7 @@ from fastapi import (
     Depends, 
     HTTPException
 )
+from fastapi.security import HTTPBearer
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 import stripe
@@ -14,9 +15,13 @@ from core.dependencies import donation_service
 from api.schemas import CognitoUser, DonationIntentRequest, DonationIntentResponse, PublicDonationResponse, TotalDonationResponse
 
 router = APIRouter()
+security = HTTPBearer(auto_error=False)
 logger = logging.getLogger(__name__)
 
-async def get_current_user(request: Request) -> CognitoUser:
+async def get_current_user(
+    request: Request,
+    token: Optional[str] = Depends(security)
+) -> CognitoUser:
     try:
         auth = request.scope.get("aws.event", {}).get("requestContext", {}).get("authorizer", {})
         claims = auth.get("claims", {})

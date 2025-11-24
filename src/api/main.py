@@ -1,10 +1,13 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 from api import routers
 
 
-app = FastAPI()
+app = FastAPI(
+    root_path="/Prod"  
+)
 
 app.add_middleware(
     CORSMiddleware,
