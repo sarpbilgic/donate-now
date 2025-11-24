@@ -107,6 +107,8 @@ Resources:
             QueueName: !GetAtt PaymentQueue.QueueName
         - SQSSendMessagePolicy:
             QueueName: !GetAtt NotificationQueue.QueueName
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DonationsTable
         - Statement:
             - Sid: AllowSSMParameterAccess
               Effect: Allow
@@ -219,6 +221,8 @@ Resources:
             QueueName: !GetAtt PaymentQueue.QueueName
         - DynamoDBWritePolicy:
             TableName: !Ref DonationsTable
+        - SQSSendMessagePolicy:
+            QueueName: !GetAtt NotificationQueue.QueueName
         - Statement:
             - Effect: Allow
               Action:
