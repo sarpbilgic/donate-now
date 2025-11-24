@@ -1,8 +1,15 @@
 import json
+import logging
 from core.dependencies import notification_service
 
+# We need to configure logging here since workers are entry points
+from core.logging_config import configure_logging
+configure_logging()
+
+logger = logging.getLogger(__name__)
+
 def lambda_handler(event, context):
-    print(f"Received {len(event['Records'])} notification jobs.")
+    logger.info(f"Received {len(event['Records'])} notification jobs.")
 
     for record in event['Records']:
         try:
@@ -16,7 +23,7 @@ def lambda_handler(event, context):
                 )
         
         except Exception as e:
-            print(f"CRITICAL: Failed to process message {record['messageId']}. Error: {e}")           
+            logger.error(f"CRITICAL: Failed to process message {record['messageId']}. Error: {e}")           
             raise e
             
     return {'statusCode': 200}

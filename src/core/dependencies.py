@@ -1,11 +1,21 @@
 import boto3
 import stripe
+import logging
 from functools import lru_cache
 
 from core.config import settings
+from core.logging_config import configure_logging
 from data_access.dynamodb import DynamoDataAccess
 from services.donation_service import DonationService
 from services.notification_service import NotificationService
+
+# Initialize logging configuration
+configure_logging()
+
+@lru_cache()
+def get_logger(name: str) -> logging.Logger:
+    return logging.getLogger(name)
+
 
 
 @lru_cache()

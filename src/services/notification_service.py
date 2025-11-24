@@ -1,6 +1,9 @@
 import boto3
+import logging
 from botocore.exceptions import ClientError
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+
+logger = logging.getLogger(__name__)
 
 class NotificationService:
     def __init__(self, client, from_email: str):
@@ -22,7 +25,7 @@ class NotificationService:
             f"We appreciate your support!"
         )
         
-        print(f"Attempting to send email to {email_to}...")
+        logger.info(f"Attempting to send email to {email_to}...")
         
         self.ses_client.send_email(
             Source=self.from_email,
@@ -33,4 +36,4 @@ class NotificationService:
             }
         )
         
-        print(f"Successfully sent receipt to {email_to}")
+        logger.info(f"Successfully sent receipt to {email_to}")

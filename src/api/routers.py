@@ -8,12 +8,13 @@ from fastapi import (
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 import stripe
+import logging
 
 from core.dependencies import donation_service
-from api.schemas import CognitoUser, DonationIntentRequest, DonationIntentResponse
+from api.schemas import CognitoUser, DonationIntentRequest, DonationIntentResponse, PublicDonationResponse, TotalDonationResponse
 
 router = APIRouter()
-
+logger = logging.getLogger(__name__)
 
 async def get_current_user(request: Request) -> CognitoUser:
     try:
@@ -48,7 +49,8 @@ async def create_donation_intent(
         client_secret = donation_service.create_stripe_intent(
             amount=body.amount,
             email=user.email,      
-            user_id=user.sub        
+            user_id=user.sub,
+            user_name = user.name        
         )
         return DonationIntentResponse(client_secret=client_secret)
     
@@ -75,11 +77,31 @@ async def handle_stripe_webhook(request: Request, stripe_signature: str = Header
         return {"status": "queued"}
     
     except stripe.error.SignatureVerificationError as e:
-        print(f"Webhook signature verification failed: {e}")
+        logger.warning(f"Webhook signature verification failed: {e}")
         raise HTTPException(status_code=400, detail="Invalid signature")
     except ValueError as e:
-        print(f"Webhook invalid payload: {e}")
+        logger.warning(f"Webhook invalid payload: {e}")
         raise HTTPException(status_code=400, detail="Invalid payload")
     except Exception as e:
-        print(f"Webhook internal error: {e}")
+        logger.error(f"Webhook internal error: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.get(
+    "/donations/recent",
+    response_model=list[PublicDonationResponse]
+)
+def get_recent_donations():
+    donations = donation_service.list_recent_donations(limit=10)
+    return donations
+
+@router.get(
+    "/donations/total",
+    response_model=TotalDonationResponse
+)
+def get_total_donations():
+    total_cents_data = donation_service.get_total_donations()
+    total_cents = total_cents_data.get('TotalAmountCents', 0)
+    
+    total_amount_dollars = total_cents / 100.0
+        
+    return TotalDonationResponse(total_amount_dollars=total_amount_dollars)

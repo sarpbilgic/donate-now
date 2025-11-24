@@ -1,8 +1,11 @@
 import boto3
 import os
+import logging
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 class Settings(BaseSettings):
     
@@ -35,7 +38,7 @@ def _get_ssm_parameter(parameter_name: str, region: str = "eu-central-1") -> Opt
         )
         return response['Parameter']['Value']
     except Exception as e:
-        print(f"Warning: Could not fetch SSM parameter {parameter_name}: {e}")
+        logger.warning(f"Warning: Could not fetch SSM parameter {parameter_name}: {e}")
         return None
 
 @lru_cache()

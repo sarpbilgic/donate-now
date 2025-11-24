@@ -14,6 +14,7 @@ class UserProfile(BaseModel):
 
 class Donation(BaseModel):
     user_email: EmailStr
+    donor_name: str | None = None
     donation_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     
     amount: int 

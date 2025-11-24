@@ -1,9 +1,12 @@
 import json
 import stripe
+import logging
 from botocore.exceptions import ClientError
 
 from data_access.dynamodb import DynamoDataAccess
 from models.donation import Donation, UserProfile
+
+logger = logging.getLogger(__name__)
 
 class DonationService:
     def __init__(
@@ -20,11 +23,16 @@ class DonationService:
         self.notification_queue_url = notification_queue_url
         self.stripe_webhook_secret = stripe_webhook_secret
 
-    def create_stripe_intent(self, amount: int, email: str, user_id: str) -> str:
-        profile = UserProfile(email=email, user_id=user_id)
+    def create_stripe_intent(self, amount: int, email: str, user_id: str, user_name: str = None) -> str:
+        profile = UserProfile(email=email, user_id=user_id, name=user_name)
         self.data_access.create_user_profile(profile)
         
-        donation = Donation(user_email=email, amount=amount, status="PENDING")
+        donation = Donation(
+            user_email=email, 
+            amount=amount, 
+            status="PENDING", 
+            donor_name=user_name if user_name else None
+        )
         self.data_access.create_donation_record(donation)
         
         try:
@@ -39,7 +47,7 @@ class DonationService:
             )
             return intent.client_secret
         except Exception as e:
-            print(f"Error creating Stripe intent: {e}")
+            logger.error(f"Error creating Stripe intent: {e}")
             raise
 
     def queue_payment_webhook(self, payload: bytes, signature_header: str):
@@ -55,14 +63,14 @@ class DonationService:
                 MessageBody=json.dumps(event)
             )
         except ValueError as e:
-            print(f"Webhook error: Invalid payload - {e}")
+            logger.error(f"Webhook error: Invalid payload - {e}")
             raise
         except stripe.error.SignatureVerificationError as e:
             # Invalid signature
-            print(f"Webhook error: Invalid signature - {e}")
+            logger.error(f"Webhook error: Invalid signature - {e}")
             raise
         except ClientError as e:
-            print(f"SQS Error: {e}")
+            logger.error(f"SQS Error: {e}")
             raise
 
     def handle_payment_event(self, event_body: str):
@@ -85,6 +93,9 @@ class DonationService:
             )
 
             if updated_attributes:
+
+                self.data_access.update_total_donations(amount)
+
                 notification_job = {
                     "type": "RECEIPT",
                     "email_to": email,
@@ -95,9 +106,9 @@ class DonationService:
                     QueueUrl=self.notification_queue_url,
                     MessageBody=json.dumps(notification_job)
                 )
-                print(f"Successfully processed payment {payment_intent_id}.")
+                logger.info(f"Successfully processed payment {payment_intent_id}.")
             else:
-                print(f"Skipped duplicate processing for payment {payment_intent_id}.")
+                logger.info(f"Skipped duplicate processing for payment {payment_intent_id}.")
 
         elif event['type'] == 'payment_intent.failed':
             intent = event['data']['object']
@@ -114,9 +125,16 @@ class DonationService:
             )
             
             if updated_attributes:
-                print(f"Payment failed for donation {donation_id}.")
+                logger.warning(f"Payment failed for donation {donation_id}.")
             else:
-                print(f"Skipped duplicate processing for failed payment {donation_id}.")
+                logger.info(f"Skipped duplicate processing for failed payment {donation_id}.")
         
         else:
-            print(f"Received unhandled event type: {event['type']}")
+            logger.warning(f"Received unhandled event type: {event['type']}")
+
+
+    def list_recent_donations(self, limit: int = 10) -> list[dict]:
+        return self.data_access.get_recent_donations(limit)
+
+    def get_total_donations(self) -> dict:
+        return self.data_access.get_total_donations()
