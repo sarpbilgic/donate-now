@@ -171,6 +171,12 @@ Resources:
                 type: 'aws_proxy'
                 uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations'
                 httpMethod: 'POST'
+            options:
+              security: [] # Disable auth for CORS preflight
+              x-amazon-apigateway-integration:
+                type: 'aws_proxy'
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations'
+                httpMethod: 'POST'
           /docs:
             get:
               security: [] # Make docs public
