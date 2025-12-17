@@ -1,6 +1,6 @@
-# 💝 Donate Now - Serverless Donation Platform
+# Donate Now - Serverless Donation Platform
 
-A secure, scalable donation platform built with **FastAPI**, **AWS SAM**, **Stripe**, and modern serverless architecture.
+A secure, scalable donation platform built with **FastAPI**, **AWS**, **Stripe**, and modern serverless architecture.
 
 ---
 
